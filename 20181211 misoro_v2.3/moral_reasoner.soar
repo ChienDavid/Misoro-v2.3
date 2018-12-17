@@ -1,0 +1,2340 @@
+#==================================================================================================
+#================================================ david ===========================================
+#==================================================================================================
+# Soar Ethical Agent: version moral_reason.soar
+# Author        : Chien Van Dang
+# Execution file: misoro2_3.py
+# Updated date	: 11th Dec. 2018
+# Application	: Soar Ethical Agent: mix Top-down and Bottom-up methods (3rd year)
+# Update        : reduced inputs, integrated Emergency in mission
+#==================================================================================================
+#==================================================================================================
+#==================================================================================================
+
+###################################################################################################
+### Set semantic memory learning on
+### Enable Reinforcement learning
+### Set epsilon value = 0.1
+###################################################################################################
+smem --set learning on
+
+rl --set learning on
+indifferent-selection --epsilon-greedy
+indifferent-selection --epsilon 0.1
+
+###################################################################################################
+### Add knowledge to SMem
+###################################################################################################
+# Semantic Memory
+
+###################################################################################################
+### Initialize top-down and bottom-up agent
+###################################################################################################
+sp {propose*initialize-moral_reasoner
+   (state <s> ^type state
+             -^name)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name initialize-moral_reasoner)
+}
+
+sp {apply*initialize-moral_reasoner
+   (state <s> ^operator.name initialize-moral_reasoner
+	      ^io.output-link <out_link>	# variables displayed and commands out
+              ^smem.command <cmd>)
+-->
+   (<s> ^name moral_reasoner <agent>
+        ^mrule <mrule1> <mrule2> <mrule3> <mrule4> <mrule5> <mrule6> <mrule7> <mrule8> <mrule9> <mrule10>
+        ^moral_case <delivery> <security> <entertainment> <emergency>
+        ^sum_eds <sum>			# total score of moral decision
+        ^behavior <b1> <b2> <b3>
+        ^pre_rl <rl>			# previous rl operator score
+        ^io-link-status changed)
+
+   (<agent> ^get_input <get_in>		# collect current inputs: mission and orders
+	    ^pre_input <pre_in>		# save previous inputs
+            ^complaint_input <com_in>   # complaint from user
+	    ^temp_val <temp>		# temporary values
+	    ^retrieve_smem <r_smem>)	# retrieve SMem information
+   (<get_in> ^mission pending	# pending, completed
+	     ^user_name none	# user name: Changsu Kim, Sunja Park, Juho Kim, Seonmi Lee, Jinwoo Kim, Mina Kim
+	     ^order_name none	# food order: candy, lemon juice, cheese, stir-fried anchovies
+             ^situation none	# situation of the emergency
+             ^target_person none)
+   (<pre_in> ^pre_food none	# previous food name
+	     ^pre_user none	# previous user name: Changsu Kim, Sunja Park, Juho Kim, Seonmi Lee, Jinwoo Kim, Mina Kim
+	     ^pre_emer_priority 1	# previous emergency priority values
+	     ^pre_priority 1	# previous priority values
+	     ^pre_act none)	# result of previous action: pending (robot is on doing the serve), accomplished (robot has done the serve)
+   (<com_in> ^complaintSTT none
+             ^who_involved none
+             ^what_involved none
+             ^effect none)
+   (<temp> ^is_item_good_for_health default
+	   ^recommend1 none	# recommend good food
+	   ^recommend2 none
+	   ^recommend3 none
+           ^authorization none	# authorization for access of private data.
+           ^request_phone_no 0
+           ^request_hobby none
+           ^request_weakness none
+           ^request_wifiPassword none
+           ^score_dance 0
+           ^score_sing 0
+           ^score_play 0)
+   (<r_smem> ^user_name none		# user name: Changsu Kim, Sunja Park, Juho Kim, Seonmi Lee, Jinwoo Kim, Mina Kim
+	     ^user_position none	# user position: grandparents, parents, children
+	     ^user_gender none		# user gender: male, female.
+	     ^user_dateOfBirth 0	# user dateOfBirth: year-month-day format
+	     ^user_disease none		# user disease: no or disease name: tooth cavity, diabetes, asthma, etc.
+             ^user_phone_no 0
+             ^user_hobby none
+             ^user_weakness none
+	     ^user_normal_priority 0	# user priorities in normal cases
+	     ^user_emergency_priority 0	# user priorities in emergency cases
+	     ^emergency_situation none
+	     ^emergency_action1 none
+	     ^emergency_action2 none
+	     ^emergency_action3 none
+             ^game_name none
+             ^food_name none		# food name: candy, lemon juice, cheese
+	     ^food_type none		# food type: candy, juice, rice.
+	     ^food_status none		# food status: hot, cold, soft, hard, etc.
+	     ^food_ingredient none	# food ingredient: flour, onion, sugar, etc.
+	     ^food_nutrient none	# food nutrient: protein, fat, carbonhydrate, cholesterol, etc.
+	     ^disease_worsened1 none	# related diseases: disease_worsened: tooth cavity, diabetes, asthma, etc.
+	     ^disease_worsened2 none
+	     ^disease_worsened3 none)
+
+   # 10 moral rules proposed by Kim
+   (<mrule1> ^name 1 ^obey 0 ^disobey 0)
+   (<mrule2> ^name 2 ^obey 0 ^disobey 0)
+   (<mrule3> ^name 3 ^obey 0 ^disobey 0)
+   (<mrule4> ^name 4 ^obey 0 ^disobey 0)
+   (<mrule5> ^name 5 ^obey 0 ^disobey 0)
+   (<mrule6> ^name 6 ^obey 0 ^disobey 0)
+   (<mrule7> ^name 7 ^obey 0 ^disobey 0)
+   (<mrule8> ^name 8 ^obey 0 ^disobey 0)
+   (<mrule9> ^name 9 ^obey 0 ^disobey 0)
+   (<mrule10> ^name 10 ^obey 0 ^disobey 0)
+
+   (<sum> ^obey 0 ^disobey 0)
+
+   (<delivery> ^fdgood <fgrule1> <fgrule2> <fgrule3> <fgrule4> <fgrule5> <fgrule6> <fgrule7> <fgrule8> <fgrule9> <fgrule10>
+               ^fdbad <fbrule1> <fbrule2> <fbrule3> <fbrule4> <fbrule5> <fbrule6> <fbrule7> <fbrule8> <fbrule9> <fbrule10>)
+   # score table for good food
+   (<fgrule1> ^name 1 ^obey 0 ^disobey -3)
+   (<fgrule2> ^name 2 ^obey 0 ^disobey 0)
+   (<fgrule3> ^name 3 ^obey 0 ^disobey -3)
+   (<fgrule4> ^name 4 ^obey 0 ^disobey 0)
+   (<fgrule5> ^name 5 ^obey 0 ^disobey -2)
+   (<fgrule6> ^name 6 ^obey 0 ^disobey -2)
+   (<fgrule7> ^name 7 ^obey 0 ^disobey 0)
+   (<fgrule8> ^name 8 ^obey 0 ^disobey 0)
+   (<fgrule9> ^name 9 ^obey 0 ^disobey -1)
+   (<fgrule10> ^name 10 ^obey 0 ^disobey -1)
+
+   # score table for bad food
+   (<fbrule1> ^name 1 ^obey -3 ^disobey 0)
+   (<fbrule2> ^name 2 ^obey 0 ^disobey 0)
+   (<fbrule3> ^name 3 ^obey 0 ^disobey 0)
+   (<fbrule4> ^name 4 ^obey -3 ^disobey 0)
+   (<fbrule5> ^name 5 ^obey -2 ^disobey 0)
+   (<fbrule6> ^name 6 ^obey 0 ^disobey -2)
+   (<fbrule7> ^name 7 ^obey 0 ^disobey 0)
+   (<fbrule8> ^name 8 ^obey 0 ^disobey 0)
+   (<fbrule9> ^name 9 ^obey 0 ^disobey -1)
+   (<fbrule10> ^name 10 ^obey 0 ^disobey -1)
+
+   (<security> ^sgood <sgrule1> <sgrule2> <sgrule3> <sgrule4> <sgrule5> <sgrule6> <sgrule7> <sgrule8> <sgrule9> <sgrule10>
+               ^sbad <sbrule1> <sbrule2> <sbrule3> <sbrule4> <sbrule5> <sbrule6> <sbrule7> <sbrule8> <sbrule9> <sbrule10>)
+   # score table for good security
+   (<sgrule1> ^name 1 ^obey 0 ^disobey -2)
+   (<sgrule2> ^name 2 ^obey 0 ^disobey 0)
+   (<sgrule3> ^name 3 ^obey 0 ^disobey 0)
+   (<sgrule4> ^name 4 ^obey 0 ^disobey 0)
+   (<sgrule5> ^name 5 ^obey 0 ^disobey 0)
+   (<sgrule6> ^name 6 ^obey 0 ^disobey -2)
+   (<sgrule7> ^name 7 ^obey 0 ^disobey 0)
+   (<sgrule8> ^name 8 ^obey 0 ^disobey 0)
+   (<sgrule9> ^name 9 ^obey 0 ^disobey -1)
+   (<sgrule10> ^name 10 ^obey 0 ^disobey -1)
+
+   # score table for bad security
+   (<sbrule1> ^name 1 ^obey -3 ^disobey -1)
+   (<sbrule2> ^name 2 ^obey 0 ^disobey 0)
+   (<sbrule3> ^name 3 ^obey -3 ^disobey 0)
+   (<sbrule4> ^name 4 ^obey -3 ^disobey 0)
+   (<sbrule5> ^name 5 ^obey 0 ^disobey 0)
+   (<sbrule6> ^name 6 ^obey 0 ^disobey -2)
+   (<sbrule7> ^name 7 ^obey 0 ^disobey 0)
+   (<sbrule8> ^name 8 ^obey 0 ^disobey 0)
+   (<sbrule9> ^name 9 ^obey -1 ^disobey 0)
+   (<sbrule10> ^name 10 ^obey 0 ^disobey -1)
+
+   (<entertainment> ^entertainment <erule1> <erule2> <erule3> <erule4> <erule5> <erule6> <erule7> <erule8> <erule9> <erule10>)
+   # score table for entertainment
+   (<erule1> ^name 1 ^obey 0 ^disobey 0)
+   (<erule2> ^name 2 ^obey 0 ^disobey 0)
+   (<erule3> ^name 3 ^obey 0 ^disobey 0)
+   (<erule4> ^name 4 ^obey 0 ^disobey 0)
+   (<erule5> ^name 5 ^obey 0 ^disobey 0)
+   (<erule6> ^name 6 ^obey 0 ^disobey 0)
+   (<erule7> ^name 7 ^obey 0 ^disobey 0)
+   (<erule8> ^name 8 ^obey 0 ^disobey 0)
+   (<erule9> ^name 9 ^obey 0 ^disobey 0)
+   (<erule10> ^name 10 ^obey 0 ^disobey -1)
+
+   (<emergency> ^emergency <emerrule1> <emerrule2> <emerrule3> <emerrule4> <emerrule5> <emerrule6> <emerrule7> <emerrule8> <emerrule9> <emerrule10>)
+   # score table for emergency
+   (<emerrule1> ^name 1 ^obey 0 ^disobey -3)
+   (<emerrule2> ^name 2 ^obey 0 ^disobey 0)
+   (<emerrule3> ^name 3 ^obey 0 ^disobey -3)
+   (<emerrule4> ^name 4 ^obey 0 ^disobey -3)
+   (<emerrule5> ^name 5 ^obey 0 ^disobey -2)
+   (<emerrule6> ^name 6 ^obey 0 ^disobey 0)
+   (<emerrule7> ^name 7 ^obey 0 ^disobey -2)
+   (<emerrule8> ^name 8 ^obey 0 ^disobey 0)
+   (<emerrule9> ^name 9 ^obey 0 ^disobey 0)
+   (<emerrule10> ^name 10 ^obey 0 ^disobey -1)
+
+
+   (<b1> ^name dance)
+   (<b2> ^name sing)
+   (<b3> ^name play)
+   (<rl> ^pre_rl_no_tune 0 ^pre_rl_tune 0)
+   (<out_link> ^user_name none		# display family user information
+	     ^user_position none	# same above
+	     ^user_gender none		# same above
+	     ^user_dateOfBirth 0	# same above
+	     ^user_disease none		# same above
+             ^user_phone_no 0		# same above
+             ^user_hobby none		# same above
+             ^user_weakness none	# same above
+	     ^user_normal_priority 0	# same above
+	     ^user_emergency_priority 0	# same above
+	     ^emergency_situation none
+	     ^emergency_action1 none
+	     ^emergency_action2 none
+	     ^emergency_action3 none
+             ^game_name none
+	     ^food_name none		# display ordered food information
+	     ^food_type none		# same above
+	     ^food_status none		# same above
+	     ^food_ingredient none	# same above
+	     ^food_nutrient none	# same above
+	     ^disease_worsened1 none	# related diseases: disease_worsened: tooth cavity, diabetes, asthma, etc.
+	     ^disease_worsened2 none
+	     ^disease_worsened3 none
+	     ^mission pending
+             ^endMission none
+	     ^is_item_good_for_health none	# healthy value: no/yes ("no" means unhealthy, "yes" means healthy food)
+	     ^recommend1 none			# recommend good food
+	     ^recommend2 none
+	     ^recommend3 none
+             ^authorization none
+             ^person none
+             ^request_phone_no 0
+             ^request_hobby none
+             ^request_weakness none
+             ^request_wifiPassword none
+             ^complaintSTT none
+             ^who_involved none
+             ^what_involved none
+             ^effect none
+             ^score_dance 0
+             ^score_sing 0
+             ^score_play 0
+             ^behavior none
+             ^obey 0
+             ^disobey 0
+             ^mdecision none
+             ^pre_rl_no_tune 0
+             ^pre_rl_tune 0
+	     ^act_name none		# action.
+	     ^extra_act none)		# extra action in priority case
+   (<cmd> ^store <st>
+	  ^retrieve <retrieved_info>)
+   (<st> ^store_emergency <em1> <em2> <em3>
+         ^store_user <home> <father> <mother> <first_child> <second_child> <stranger>
+         ^store_game <game1> <game2> <game3>
+         ^store_item_disease_relationship <food1> <food2> <food3> <food4> <food5> <food6> <food7> <food8> <food9> <food10> <food11> <food12> <food13> <food14>
+	 ^store_disease_item_relationship <disease1> <disease2> <disease3> <disease4> <disease5> <disease6> <disease7> <disease8> <disease9> <disease10> <disease11> <disease12> <disease13> <disease14> <disease15> <disease16> <disease17>)
+
+# emergency manuals
+   (<em1> ^situation |on fire| ^action1 |call 119| ^action2 alarm ^action3 |bring fire extinguishers|)
+   (<em2> ^situation |heart attack| ^action1 |call 119| ^action2 alarm ^action3 |bring medicine cabinet|)
+   (<em3> ^situation bleeding ^action1 |call 119| ^action2 alarm ^action3 |bring medicine cabinet|)
+
+# family information
+   (<father> ^name |Juho Kim| ^info <father_info> ^priority <father_priority> ^private <father_private>)
+   (<father_info> ^position father ^gender male ^dateOfBirth 19851210 ^disease |no disease|)
+   (<father_priority> ^normal 7 ^emergency 15)
+   (<father_private> ^phone_no 821056631409 ^hobby reading ^weakness cooking)
+
+   (<mother> ^name |Seonmi Lee| ^info <mother_info> ^priority <mother_priority> ^private <mother_private>)
+   (<mother_info> ^position mother ^gender female ^dateOfBirth 19880212 ^disease |no disease|)
+   (<mother_priority> ^normal 8 ^emergency 16)
+   (<mother_private> ^phone_no 821034960121 ^hobby cooking ^weakness |fear of height|)
+
+   (<first_child> ^name |Jinwoo Kim| ^info <first_info> ^priority <first_priority> ^private <first_private>)
+   (<first_info> ^position |first child| ^gender male ^dateOfBirth 20130625 ^disease atopy)
+   (<first_priority> ^normal 6 ^emergency 19)
+   (<first_private> ^phone_no 0 ^hobby baseball ^weakness |fear of insect|)
+
+   (<second_child> ^name |Mina Kim| ^info <second_info> ^priority <second_priority> ^private <second_private>)
+   (<second_info> ^position |second child| ^gender female ^dateOfBirth 20160314 ^disease |tooth cavity|)
+   (<second_priority> ^normal 5 ^emergency 20)
+   (<second_private> ^phone_no 0 ^hobby drawing ^weakness shy)
+
+   (<stranger> ^name Stranger ^info <stranger_info> ^priority <stranger_priority> ^private <stranger_private>)
+   (<stranger_info> ^position unknown ^gender male ^dateOfBirth 0 ^disease unknown)
+   (<stranger_priority> ^normal 1 ^emergency 1)
+   (<stranger_private> ^phone_no 0 ^hobby unknown ^weakness unknown)
+
+   (<home> ^name home ^info <home_info>)
+   (<home_info> ^phone_no 512005579 ^wifi_password loveyou)
+
+# game
+   (<game1> ^game_name toy)
+   (<game2> ^game_name |liquid monster toy|)
+   (<game3> ^game_name |kitchen toys|)
+
+# food_disease_relationship
+   (<food1> ^food_name candy ^food_info <info1> ^related_disease <r_disease_1>)			# candy
+   (<info1> ^food_type snacks ^food_status hard ^food_ingredient sugar ^food_nutrient fat)
+   (<r_disease_1> ^disease_worsened1 |tooth cavity| ^disease_worsened2 diabetes ^disease_worsened3 |high blood pressure|)
+   (<food2> ^food_name |lemon juice| ^food_info <info2> ^related_disease <r_disease_2>)		# lemon juice
+   (<info2> ^food_type juice ^food_status cool ^food_ingredient lemon ^food_nutrient fat)
+   (<r_disease_2> ^disease_worsened1 |tooth cavity| ^disease_worsened2 |stomach ulcer| ^disease_worsened3 |high blood pressure|)
+   (<food3> ^food_name cheese ^food_info <info3> ^related_disease <r_disease_3>)			# cheese
+   (<info3> ^food_type dairy ^food_status soft ^food_ingredient milk ^food_nutrient calcium)
+   (<r_disease_3> ^disease_worsened1 asthma ^disease_worsened2 |milk intolerance| ^disease_worsened3 hyperlipidemia)
+   (<food4> ^food_name |stir-fried anchovies| ^food_info <info4> ^related_disease <r_disease_4>)# stir-fried anchovies
+   (<info4> ^food_type fish ^food_status dry ^food_ingredient fish ^food_nutrient calcium)
+   (<r_disease_4> ^disease_worsened1 |bowel trouble| ^disease_worsened2 gout ^disease_worsened3 calculus)
+   (<food5> ^food_name |rolled omelette| ^food_info <info5> ^related_disease <r_disease_5>)	# rolled_omelet
+   (<info5> ^food_type egg ^food_status hot ^food_ingredient egg ^food_nutrient protein)
+   (<r_disease_5> ^disease_worsened1 asthma ^disease_worsened2 |cardiovascular disorders| ^disease_worsened3 |high blood pressure|)
+   (<food6> ^food_name shellfish ^food_info <info6> ^related_disease <r_disease_6>)		# shellfish
+   (<info6> ^food_type seafood ^food_status hot ^food_ingredient fish ^food_nutrient protein)
+   (<r_disease_6> ^disease_worsened1 |food poisoning| ^disease_worsened2 stomachache ^disease_worsened3 diarrhea)
+   (<food7> ^food_name strawberries ^food_info <info7> ^related_disease <r_disease_7>)		# strawberries
+   (<info7> ^food_type fruit ^food_status cool ^food_ingredient fruit ^food_nutrient vitamin)
+   (<r_disease_7> ^disease_worsened1 enteritis ^disease_worsened2 indigestion ^disease_worsened3 diarrhea)
+   (<food8> ^food_name |orange juice| ^food_info <info8> ^related_disease <r_disease_8>)	# orange juice
+   (<info8> ^food_type juice ^food_status cool ^food_ingredient |orange fruit| ^food_nutrient |vitamin A and C|)
+   (<r_disease_8> ^disease_worsened1 |tooth cavity| ^disease_worsened2 cold ^disease_worsened3 diabetes)
+   (<food9> ^food_name cookie ^food_info <info9> ^related_disease <r_disease_9>)		# cookie
+   (<info9> ^food_type snack ^food_status soft ^food_ingredient |wheat flour| ^food_nutrient fat)
+   (<r_disease_9> ^disease_worsened1 |tooth cavity| ^disease_worsened2 |milk and cookie disease| ^disease_worsened3 diabetes)
+   (<food10> ^food_name |ice cream| ^food_info <info10> ^related_disease <r_disease_10>)	# ice_cream
+   (<info10> ^food_type dessert ^food_status cool ^food_ingredient sugar ^food_nutrient no)
+   (<r_disease_10> ^disease_worsened1 |tooth cavity| ^disease_worsened2 cold ^disease_worsened3 diabetes)
+   (<food11> ^food_name |water| ^food_info <info11> ^related_disease <r_disease_11>)	# water
+   (<info11> ^food_type liquid ^food_status cool ^food_ingredient no ^food_nutrient no)
+   (<r_disease_11> ^disease_worsened1 no ^disease_worsened2 no2 ^disease_worsened3 no3)
+   (<food12> ^food_name |banana| ^food_info <info12> ^related_disease <r_disease_12>)	# banana
+   (<info12> ^food_type fruit ^food_status fresh ^food_ingredient no ^food_nutrient vitamin)
+   (<r_disease_12> ^disease_worsened1 allergic ^disease_worsened2 no2 ^disease_worsened3 no3)
+   (<food13> ^food_name |milk| ^food_info <info13> ^related_disease <r_disease_13>)	# milk
+   (<info13> ^food_type liguid ^food_status cool ^food_ingredient milk ^food_nutrient |vitamin D|)
+   (<r_disease_13> ^disease_worsened1 allergic ^disease_worsened2 intolerances ^disease_worsened3 cancer)
+   (<food14> ^food_name |onion| ^food_info <info14> ^related_disease <r_disease_14>)	# onion
+   (<info14> ^food_type vegetable ^food_status dry ^food_ingredient no ^food_nutrient |vitamins and minerals|)
+   (<r_disease_14> ^disease_worsened1 allergy ^disease_worsened2 |chronic heartburn| ^disease_worsened3 |gastric reflux|)
+
+# disease_food_relationship
+   (<disease1> ^disease |tooth cavity| ^related_food <rfood1>)			# tooth cavity
+   (<rfood1> ^good_food1 Cheese ^good_food2 Banana ^good_food3 milk)
+
+   (<disease2> ^disease asthma ^related_food <rfood2>)				# asthma
+   (<rfood2> ^good_food1 shellfish ^good_food2 |ballon flower root salad| ^good_food3 |stir-fried Mushroom|)
+
+   (<disease3> ^disease cold ^related_food <rfood3>)				# cold
+   (<rfood3> ^good_food1 strawberries ^good_food2 |ballon flower root salad| ^good_food3 |sea mustard soup|)
+
+   (<disease4> ^disease bronchitis ^related_food <rfood4>)			# bronchitis
+   (<rfood4> ^good_food1 |green tea| ^good_food2 |ballon flower root salad| ^good_food3 |quince tea|)
+   (<disease5> ^disease enteritis ^related_food <rfood5>)			# enteritis
+   (<rfood5> ^good_food1 banana ^good_food2 |thin rice gruel| ^good_food3 |green plum tea|)
+   (<disease6> ^disease |high blood pressure| ^related_food <rfood6>)		# high blood pressure
+   (<rfood6> ^good_food1 banana ^good_food2 |braised mackerel| ^good_food3 |oat stir fries|)
+   (<disease7> ^disease diabetes ^related_food <rfood7>)			# diabetes
+   (<rfood7> ^good_food1 |balsam apple juice| ^good_food2 |barley rice| ^good_food3 |wild vegetable bibimbap|)
+   (<disease8> ^disease |stomach ulcer| ^related_food <rfood8>)			# stomach ulcer
+   (<rfood8> ^good_food1 |sweet pumpkin porridge| ^good_food2 |a cabbage salad| ^good_food3 |braised Mackerel|)
+   (<disease9> ^disease |milk intolerance| ^related_food <rfood9>)		# milk intolerance
+   (<rfood9> ^good_food1 |thin rice gruel| ^good_food2 |Lactic acid bacteria yogurt| ^good_food3 |malt sweet rice drink|)
+   (<disease10> ^disease hyperlipidemia ^related_food <rfood10>)		# hyperlipidemia
+   (<rfood10> ^good_food1 |rich soybean paste stew| ^good_food2 |braised mackerel| ^good_food3 |dried persimmon|)
+   (<disease11> ^disease gout ^related_food <rfood11>)				# gout
+   (<rfood11> ^good_food1 |blueberry| ^good_food2 |strawberry| ^good_food3 |sea mustard soup|)
+   (<disease12> ^disease calculus ^related_food <rfood12>)			# calculus
+   (<rfood12> ^good_food1 |abalone rice porridge| ^good_food2 |kidney bean salad| ^good_food3 |gimbap|)
+   (<disease13> ^disease |cardiovascular disorders| ^related_food <rfood13>)	# cardiovascular disorders
+   (<rfood13> ^good_food1 |pickled galic| ^good_food2 |stir fried onion| ^good_food3 |braised mackerel|)
+   (<disease14> ^disease |food poisoning| ^related_food <rfood14>)		# food poisoning
+   (<rfood14> ^good_food1 |green plum tea| ^good_food2 |ginger tea| ^good_food3 banana)
+   (<disease15> ^disease stomachache ^related_food <rfood15>) 			# stomachache
+   (<rfood15> ^good_food1 apple ^good_food2 |ginger tea| ^good_food3 banana)
+   (<disease16> ^disease diarrhea ^related_food <rfood16>)			# diarrhea
+   (<rfood16> ^good_food1 apple ^good_food2 |green plum tea| ^good_food3 banana)
+   (<disease17> ^disease indigestion ^related_food <rfood17>)			# indigestion
+   (<rfood17> ^good_food1 kiwi ^good_food2 |green plum tea| ^good_food3 |radish stir-fried vegetables|)
+}
+
+###################################################################################################
+### Taking inputs: service/save/complaint
+###################################################################################################
+#==================================================================================================
+# Input 1: Service
+#==================================================================================================
+sp {moral_reasoner*propose*input1
+   (state <s> ^name moral_reasoner
+              ^io.input-link.get <topId_get>
+              ^io-link-status changed)
+   (<topId_get> ^mission <mission> ^user <Id1_get>)
+   (<Id1_get> ^user_name <username> ^order <Id2_get>)
+   (<Id2_get> ^order_name <ordername> ^include <Id3_get>)
+   (<Id3_get> ^situation <situation> ^target_person <relaperson>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name input1
+        ^mission <mission>
+        ^user_name <username>
+        ^order_name <ordername>
+        ^situation <situation>
+        ^target_person <relaperson>)
+}
+
+sp {moral_reasoner*apply*input1
+   (state <s> ^name moral_reasoner <agent>
+              ^operator <o>
+	      ^io.output-link <out_link>
+              ^io-link-status changed)
+   (<o> ^name input1
+	^mission <mission>
+	^user_name <username>
+	^order_name <ordername>
+        ^situation <situation>
+        ^target_person <relaperson>)
+   (<agent> ^get_input <get_in>)
+   (<get_in> ^mission <pre_mission>
+	     ^user_name <pre_username>
+	     ^order_name <pre_ordername>
+             ^situation <pre_situation>
+             ^target_person <pre_relaperson>)
+   (<out_link> ^person <out_pre_person>)
+-->
+   (<get_in> ^mission <pre_mission> - <mission>
+	     ^user_name <pre_username> - <username>
+	     ^order_name <pre_ordername> - <ordername>
+             ^situation <pre_situation> - <situation>
+             ^target_person <pre_relaperson> - <relaperson>)
+   (<out_link> ^mission <out_pre_mission> - <mission>
+               ^person <out_pre_person> - <relaperson>)
+   (<s> ^io-link-status changed - got_input1)
+}
+
+#==================================================================================================
+# Input 2: Save
+#==================================================================================================
+sp {moral_reasoner*propose*input2
+   (state <s> ^name moral_reasoner
+              ^io.input-link.save <topId_save>
+              ^io-link-status got_input1)
+   (<topId_save> ^pre_food <pre_food> ^pre_user <Id1_save>)
+   (<Id1_save> ^pre_user <pre_user> ^pre_priority <pre_priority> ^pre_emer_priority <pre_emer_priority> ^pre_action <Id2_save>)
+   (<Id2_save> ^pre_act <pre_act>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name input2
+         ^pre_food <pre_food>
+         ^pre_user <pre_user> 
+         ^pre_priority <pre_priority>
+         ^pre_emer_priority <pre_emer_priority>
+         ^pre_act <pre_act>)
+}
+
+sp {moral_reasoner*apply*input2
+   (state <s> ^name moral_reasoner <agent>
+              ^operator <o>
+	      ^io.output-link <out_link>
+              ^io-link-status got_input1)
+   (<o> ^name input2
+	^pre_food <pre_food>
+	^pre_user <pre_user>
+	^pre_priority <pre_priority>
+	^pre_emer_priority <pre_emer_priority>
+	^pre_act <pre_act>)
+   (<agent> ^pre_input <pre_in>)
+   (<pre_in> ^pre_food <food>
+	     ^pre_user <user>
+	     ^pre_priority <priority>
+	     ^pre_emer_priority <emer_priority>
+	     ^pre_act <act>)
+-->
+   (<pre_in> ^pre_food <food> - <pre_food>
+	     ^pre_user <user> - <pre_user>
+	     ^pre_priority <priority> - <pre_priority>
+	     ^pre_emer_priority <priority> - <pre_emer_priority>
+	     ^pre_act <act> - <pre_act>)
+   (<s> ^io-link-status got_input1 - got_input2)
+}
+
+#==================================================================================================
+# Input 3: Complaint
+#==================================================================================================
+sp {moral_reasoner*propose*input3
+   (state <s> ^name moral_reasoner
+              ^io.input-link.complaint <topId_complaint>
+              ^io-link-status got_input2)
+   (<topId_complaint> ^complaintSTT <complaint> 
+                      ^whoInvolved <whoInvolved> 
+                      ^whatInvolved <whatInvolved> 
+                      ^effect <effect>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name input3
+         ^complaintSTT <complaint>
+         ^who_involved <whoInvolved>
+         ^what_involved <whatInvolved>
+         ^effect <effect>)
+}
+
+sp {moral_reasoner*apply*input3
+   (state <s> ^name moral_reasoner <agent>
+              ^operator <o>
+	      ^io.output-link <out_link>
+              ^io-link-status got_input2)
+   (<o> ^name input3
+        ^complaintSTT <complaint>
+        ^who_involved <whoInvolved>
+        ^what_involved <whatInvolved>
+        ^effect <effect>)
+   (<agent> ^complaint_input <com_in>)
+   (<com_in> ^complaintSTT <pre_complaint>
+             ^who_involved <pre_whoInvolved>
+	     ^what_involved <pre_whatInvolved>
+	     ^effect <pre_effect>)
+   (<out_link> ^complaintSTT <out_pre_complaint>
+               ^who_involved <out_pre_whoInvolved>
+               ^what_involved <out_pre_whatInvolved>
+               ^effect <out_pre_effect>)
+-->
+   (<com_in> ^complaintSTT <pre_complaint> - <complaint>
+             ^who_involved <pre_whoInvolved> - <whoInvolved>
+	     ^what_involved <pre_whatInvolved> - <whatInvolved>
+	     ^effect <pre_effect> - <effect>)
+   (<out_link> ^complaintSTT <out_pre_complaint> - <complaint>
+               ^who_involved <out_pre_whoInvolved> - <whoInvolved>
+               ^what_involved <out_pre_whatInvolved> - <whatInvolved>
+               ^effect <out_pre_effect> - <effect>)
+   (<s> ^io-link-status got_input2 - got_input)
+}
+
+###################################################################################################
+###################################################################################################
+### Retrieve user information
+###################################################################################################
+###################################################################################################
+#==================================================================================================
+# User priority
+#==================================================================================================
+sp {moral_reasoner*propose*get_user_priority
+   (state <s> ^name moral_reasoner <agent>
+              ^io-link-status got_input
+              ^smem.command <cmd>)
+   (<agent> ^get_input <get_in>)
+   (<get_in> ^user_name <username>)
+   (<cmd> ^store.store_user <user>)
+   (<user> ^name <username>
+	     ^priority <priority>)
+   (<priority> ^normal <normal_priority>
+               ^emergency <emergency_priority>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name get_user_priority
+         ^user_priority <priority>)
+}
+
+sp {moral_reasoner*apply*get_user_priority
+   (state <s> ^name moral_reasoner <agent>
+              ^operator <o>
+	      ^io.output-link <out_link>
+              ^io-link-status got_input)
+   (<o> ^name get_user_priority
+         ^user_priority <priority>)
+   (<priority> ^normal <normal_priority>
+               ^emergency <emergency_priority>)
+   (<agent> ^retrieve_smem <r_smem>)
+   (<r_smem> ^user_normal_priority <pre_normal_priority>
+             ^user_emergency_priority <pre_emergency_priority>)
+   (<out_link> ^user_normal_priority <pre_disp_normal_priority>
+             ^user_emergency_priority <pre_disp_emergency_priority>)
+-->
+   (<r_smem> ^user_normal_priority <pre_normal_priority> - <normal_priority>
+             ^user_emergency_priority <pre_emergency_priority> - <emergency_priority>)
+   (<out_link> ^user_normal_priority <pre_disp_normal_priority> - <normal_priority>
+             ^user_emergency_priority <pre_disp_emergency_priority> - <emergency_priority>)
+   (<s> ^io-link-status got_input - retrieved_user_priority)
+}
+
+#==================================================================================================
+# User basic information
+#==================================================================================================
+sp {moral_reasoner*propose*get_user_basic_info
+   (state <s> ^name moral_reasoner <agent>
+              ^io-link-status retrieved_user_priority
+              ^smem.command <cmd>)
+   (<agent> ^get_input <get_in>)
+   (<get_in> ^user_name <username>)
+   (<cmd> ^store.store_user <user>)
+   (<user> ^name <username>
+	     ^info <info>)
+   (<info> ^position <position>
+	   ^gender <gender>
+	   ^dateOfBirth <dateOfBirth>
+	   ^disease <disease>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name get_user_basic_info
+	 ^user_name <username>
+         ^user_info <info>)
+}
+
+sp {moral_reasoner*apply*get_user_basic_info
+   (state <s> ^name moral_reasoner <agent>
+              ^operator <o>
+	      ^io.output-link <out_link>
+              ^io-link-status retrieved_user_priority)
+   (<o> ^name get_user_basic_info
+	 ^user_name <username>
+         ^user_info <info>)
+   (<info> ^position <position>
+           ^gender <gender>
+	   ^dateOfBirth <dateOfBirth>
+	   ^disease <disease>)
+   (<agent> ^retrieve_smem <r_smem>)
+   (<r_smem> ^user_name <pre_name>
+             ^user_position <pre_position>
+             ^user_gender <pre_gender>
+             ^user_dateOfBirth <pre_dateOfBirth>
+	     ^user_disease <pre_disease>)
+   (<out_link> ^user_name <pre_disp_name>
+	     ^user_position <pre_disp_position>
+             ^user_gender <pre_disp_gender>
+	     ^user_dateOfBirth <pre_disp_dateOfBirth>
+	     ^user_disease <pre_disp_disease>)
+-->
+   (<r_smem> ^user_name <pre_name> - <username>
+             ^user_position <pre_position> - <position>
+             ^user_gender <pre_gender> - <gender>
+	     ^user_dateOfBirth <pre_dateOfBirth> - <dateOfBirth>
+	     ^user_disease <pre_disease> - <disease>)
+   (<out_link> ^user_name <pre_disp_name> - <username>
+	     ^user_position <pre_disp_position> - <position>
+             ^user_gender <pre_disp_gender> - <gender>
+	     ^user_dateOfBirth <pre_disp_dateOfBirth> - <dateOfBirth>
+	     ^user_disease <pre_disp_disease> - <disease>)
+   (<s> ^io-link-status retrieved_user_priority - retrieved_user_basic_info)
+}
+
+#==================================================================================================
+# Request home information
+#==================================================================================================
+sp {moral_reasoner*propose*get_home_info
+   (state <s> ^name moral_reasoner <agent>
+              ^io-link-status retrieved_user_basic_info
+              ^smem.command <cmd>)
+   (<agent> ^get_input <get_in>)
+   (<get_in> ^mission |Information|
+             ^order_name |wifi password|)
+   (<cmd> ^store.store_user <user>)
+   (<user> ^name home
+           ^info <home_info>)
+   (<home_info> ^wifi_password <password>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name get_home_info
+        ^wifi_password <password>)
+}
+
+sp {moral_reasoner*apply*get_home_info
+   (state <s> ^name moral_reasoner <agent>
+              ^operator <o>
+	      ^io.output-link <out_link>
+              ^io-link-status retrieved_user_basic_info)
+   (<o> ^name get_home_info
+        ^wifi_password <password>)
+   (<agent> ^temp_val <temp>)
+   (<temp> ^request_wifiPassword <pw>)
+   (<out_link> ^request_wifiPassword <disp_pw>)
+-->
+   (<temp> ^request_wifiPassword <pw> - <password>)
+   (<out_link> ^request_wifiPassword <disp_pw> - <password>)
+   (<s> ^io-link-status retrieved_user_basic_info - retrieved_requested_info)
+}
+
+#==================================================================================================
+# User private information
+#==================================================================================================
+sp {moral_reasoner*propose*get_user_private_info
+   (state <s> ^name moral_reasoner <agent>
+              ^io-link-status retrieved_user_basic_info
+              ^smem.command <cmd>)
+   (<agent> ^get_input <get_in>)
+   (<get_in> ^mission |Information|
+             ^user_name <username>
+             ^order_name <> |wifi password|)
+   (<cmd> ^store.store_user <user>)
+   (<user> ^name <username>
+           ^private <private>)
+   (<private> ^phone_no <phone_no>
+              ^hobby <hobby>
+              ^weakness <weakness>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name get_user_private_info
+         ^user_private <private>)
+}
+
+sp {moral_reasoner*apply*get_user_private_info
+   (state <s> ^name moral_reasoner <agent>
+              ^operator <o>
+	      ^io.output-link <out_link>
+              ^io-link-status retrieved_user_basic_info)
+   (<o> ^name get_user_private_info
+         ^user_private <private>)
+   (<private> ^phone_no <phone_no>
+              ^hobby <hobby>
+              ^weakness <weakness>)
+   (<agent> ^retrieve_smem <r_smem>)
+   (<r_smem> ^user_phone_no <default_phone>
+             ^user_hobby <default_hobby>
+             ^user_weakness <default_weakness>)
+   (<out_link> ^user_phone_no <disp_phone>
+             ^user_hobby <disp_hobby>
+             ^user_weakness <disp_weakness>)
+-->
+   (<r_smem> ^user_phone_no <default_phone> - <phone_no>
+             ^user_hobby <default_hobby> - <hobby>
+             ^user_weakness <default_weakness> - <weakness>)
+   (<out_link> ^user_phone_no <disp_phone> - <phone_no>
+             ^user_hobby <disp_hobby> - <hobby>
+             ^user_weakness <disp_weakness> - <weakness>)
+   (<s> ^io-link-status retrieved_user_basic_info - retrieved_user_private_info)
+}
+
+#==================================================================================================
+# Request target person private information
+#==================================================================================================
+sp {moral_reasoner*propose*get_target_person_private_info
+   (state <s> ^name moral_reasoner <agent>
+              ^io-link-status retrieved_user_private_info
+              ^smem.command <cmd>)
+   (<agent> ^get_input <get_in>)
+   (<get_in> ^target_person <relaperson>)
+   (<cmd> ^store.store_user <user>)
+   (<user> ^name <relaperson>
+           ^private <private>)
+   (<private> ^phone_no <phone_no>
+              ^hobby <hobby>
+              ^weakness <weakness>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name get_target_person_private_info
+         ^target_person <private>)
+}
+
+sp {moral_reasoner*apply*get_target_person_private_info
+   (state <s> ^name moral_reasoner <agent>
+              ^operator <o>
+	      ^io.output-link <out_link>
+              ^io-link-status retrieved_user_private_info)
+   (<o> ^name get_target_person_private_info
+         ^target_person <private>)
+   (<private> ^phone_no <phone_no>
+              ^hobby <hobby>
+              ^weakness <weakness>)
+   (<agent> ^temp_val <temp>)
+   (<temp> ^request_phone_no <default_phone>
+           ^request_hobby <default_hobby>
+           ^request_weakness <default_weakness>)
+   (<out_link> ^request_phone_no <disp_phone>
+             ^request_hobby <disp_hobby>
+             ^request_weakness <disp_weakness>)
+-->
+   (<temp> ^request_phone_no <default_phone> - <phone_no>
+           ^request_hobby <default_hobby> - <hobby>
+           ^request_weakness <default_weakness> - <weakness>)
+   (<out_link> ^request_phone_no <disp_phone> - <phone_no>
+             ^request_hobby <disp_hobby> - <hobby>
+             ^request_weakness <disp_weakness> - <weakness>)
+   (<s> ^io-link-status retrieved_user_private_info - retrieved_requested_info)
+}
+
+###################################################################################################
+###################################################################################################
+### Emergency situation
+###################################################################################################
+###################################################################################################
+# Retrieve Emergency information
+###################################################################################################
+sp {moral_reasoner*propose*retrieve_emergency_info
+   (state <s> ^name moral_reasoner <agent>
+              ^io-link-status retrieved_user_basic_info
+              ^smem.command <cmd>)
+   (<agent> ^get_input <get_in>)
+   (<get_in> ^mission Emergency
+             ^situation <situation>)
+   (<cmd> ^store.store_emergency <store_emer>)
+   (<store_emer> ^situation <situation>
+	       ^action1 <act1>
+	       ^action2 <act2>
+	       ^action3 <act3>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name emergency
+	 ^situation <situation>
+	 ^action1 <act1>
+	 ^action2 <act2>
+	 ^action3 <act3>)
+}
+
+sp {moral_reasoner*apply*retrieve_emergency_info
+   (state <s> ^name moral_reasoner <agent>
+              ^operator <o>
+	      ^io.output-link <out_link>
+              ^io-link-status retrieved_user_basic_info)
+   (<o> ^name emergency
+	 ^situation <situation>
+	 ^action1 <act1>
+	 ^action2 <act2>
+	 ^action3 <act3>)
+   (<agent> ^retrieve_smem <r_smem>)
+   (<r_smem> ^emergency_situation <pre_situation>
+	     ^emergency_action1 <pre_act1>
+	     ^emergency_action2 <pre_act2>
+	     ^emergency_action3 <pre_act3>)
+   (<out_link> ^emergency_situation <pre_disp_situation>
+	       ^emergency_action1 <pre_disp_act1>
+	       ^emergency_action2 <pre_disp_act2>
+	       ^emergency_action3 <pre_disp_act3>)
+-->
+   (<r_smem> ^emergency_situation <pre_situation> - <situation>
+	     ^emergency_action1 <pre_act1> - <act1>
+	     ^emergency_action2 <pre_act2> - <act2>
+	     ^emergency_action3 <pre_act3> - <act3>)
+   (<out_link> ^emergency_situation <pre_disp_situation> - <situation>
+	       ^emergency_action1 <pre_disp_act1> - <act1>
+	       ^emergency_action2 <pre_disp_act2> - <act2>
+	       ^emergency_action3 <pre_disp_act3> - <act3>)
+   (<s> ^io-link-status retrieved_user_basic_info - retrieved_emergency_info)
+}
+
+###################################################################################################
+# Evaluate Emergency situation by Kim's 10 moral rules
+# Unrelated moral rules: 2,6,8,9
+# Related moral rules  : 1,3,4,5,7,10
+###################################################################################################
+
+sp {moral_reasoner*propose*emergency
+   (state <s> ^name moral_reasoner <agent>
+              ^io-link-status retrieved_emergency_info)
+   (<agent> ^get_input <get_in>)
+   (<get_in> ^mission Emergency)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name emergencyEvaluation)
+}
+
+gp {moral_reasoner*apply*emergency_eval
+   (state <s> ^name moral_reasoner <agent>
+              ^operator <o>
+              ^mrule <mrule>
+              ^moral_case.emergency <rule>
+              ^io-link-status retrieved_emergency_info)
+   (<agent> ^get_input <get_in>)
+   (<get_in> ^mission Emergency)
+   (<o> ^name emergencyEvaluation)
+   (<rule> ^name [1 2 3 4 5 6 7 8 9 10]
+           ^name <rule_no>
+           ^obey <ob_score>
+           ^disobey <dis_score>)
+   (<mrule> ^name [1 2 3 4 5 6 7 8 9 10]
+            ^name <rule_no>
+            ^obey <ob>
+            ^disobey <dis>)
+-->
+   (<mrule> ^obey <ob> - <ob_score>
+            ^disobey <dis> - <dis_score>)
+   (<s> ^io-link-status retrieved_emergency_info - eds_eval_done)
+}
+
+###################################################################################################
+###################################################################################################
+### Retrieve item information
+###################################################################################################
+###################################################################################################
+#==================================================================================================
+# Retrieve ordered game
+#==================================================================================================
+sp {moral_reasoner*propose*retrieve_game_info
+   (state <s> ^name moral_reasoner <agent>
+              ^io-link-status retrieved_user_basic_info
+              ^smem.command <cmd>)
+   (<agent> ^get_input <get_in>)
+   (<get_in> ^mission |Delivery|
+             ^order_name <gamename>)
+   (<cmd> ^store.store_game <game>)
+   (<game> ^game_name <gamename>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name retrieve_game_info
+	 ^game_name <gamename>)
+}
+
+sp {moral_reasoner*apply*retrieve_game_info
+   (state <s> ^name moral_reasoner <agent>
+              ^operator <o>
+	      ^io.output-link <out_link>
+              ^io-link-status retrieved_user_basic_info)
+   (<o> ^name retrieve_game_info
+	 ^game_name <gamename>)
+   (<agent> ^retrieve_smem <r_smem>)
+   (<r_smem> ^game_name <pre_gamename>)
+   (<out_link> ^game_name <pre_disp_gamename>)
+-->
+   (<r_smem> ^game_name <pre_gamename> - <gamename>)
+   (<out_link> ^game_name <pre_disp_gamename> - <gamename>)
+   (<s> ^io-link-status retrieved_user_basic_info - retrieved_item_info)
+}
+
+#==================================================================================================
+# Retrieve ordered food
+#==================================================================================================
+sp {moral_reasoner*propose*retrieve_food_info
+   (state <s> ^name moral_reasoner <agent>
+              ^io-link-status retrieved_user_basic_info
+              ^smem.command <cmd>)
+   (<agent> ^get_input <get_in>)
+   (<get_in> ^mission |Delivery|
+             ^order_name <foodname>)
+   (<cmd> ^store.store_item_disease_relationship <healthtable>)
+   (<healthtable> ^food_name <foodname>
+	          ^food_info <foodinfo>)
+   (<foodinfo> ^food_type <type>
+		^food_status <status>
+		^food_ingredient <ingredient>
+		^food_nutrient <nutrient>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name retrieve_food_info
+	 ^food_name <foodname>
+         ^food_info <foodinfo>)
+}
+
+sp {moral_reasoner*apply*retrieve_food_info
+   (state <s> ^name moral_reasoner <agent>
+              ^operator <o>
+	      ^io.output-link <out_link>
+              ^io-link-status retrieved_user_basic_info)
+   (<o> ^name retrieve_food_info
+	 ^food_name <foodname>
+         ^food_info <info>)
+   (<info> ^food_type <type>
+	   ^food_status <status>
+	   ^food_ingredient <ingredient>
+	   ^food_nutrient <nutrient>)
+   (<agent> ^retrieve_smem <r_smem>)
+   (<r_smem> ^food_name <pre_foodname>
+	     ^food_type <pre_type>
+	     ^food_status <pre_status>
+	     ^food_ingredient <pre_ingredient>
+	     ^food_nutrient <pre_nutrient>)
+   (<out_link> ^food_name <pre_disp_foodname>
+	     ^food_type <pre_disp_type>
+	     ^food_status <pre_disp_status>
+	     ^food_ingredient <pre_disp_ingredient>
+	     ^food_nutrient <pre_disp_nutrient>)
+-->
+   (<r_smem> ^food_name <pre_foodname> - <foodname>
+	     ^food_type <pre_type> - <type>
+	     ^food_status <pre_status> - <status>
+	     ^food_ingredient <pre_ingredient> - <ingredient>
+	     ^food_nutrient <pre_nutrient> - <nutrient>)
+   (<out_link> ^food_name <pre_disp_foodname> - <foodname>
+	     ^food_type <pre_disp_type> - <type>
+	     ^food_status <pre_disp_status> - <status>
+	     ^food_ingredient <pre_disp_ingredient> - <ingredient>
+	     ^food_nutrient <pre_disp_nutrient> - <nutrient>)
+   (<s> ^io-link-status retrieved_user_basic_info - retrieved_item_info)
+}
+
+#==================================================================================================
+# Retrieve related_disease
+#==================================================================================================
+sp {moral_reasoner*propose*retrieve_related_disease
+   (state <s> ^name moral_reasoner <agent>
+              ^io-link-status retrieved_item_info
+              ^smem.command <cmd>)
+   (<agent> ^get_input <get_in>)
+   (<get_in> ^order_name <foodname>)
+   (<cmd> ^store.store_item_disease_relationship <healthtable>)
+   (<healthtable> ^food_name <foodname>
+	          ^related_disease <rel_disease>)
+   (<rel_disease> ^disease_worsened1 <disease_worsened1>
+		  ^disease_worsened2 <disease_worsened2>
+		  ^disease_worsened3 <disease_worsened3>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name retrieve_related_disease
+	 ^related_disease <rel_disease>)
+}
+
+sp {moral_reasoner*apply*retrieve_related_disease
+   (state <s> ^name moral_reasoner <agent>
+              ^operator <o>
+	      ^io.output-link <out_link>
+              ^io-link-status retrieved_item_info)
+   (<o> ^name retrieve_related_disease
+	 ^related_disease <rel_disease>)
+   (<rel_disease> ^disease_worsened1 <disease_worsened1>
+		  ^disease_worsened2 <disease_worsened2>
+		  ^disease_worsened3 <disease_worsened3>)
+   (<agent> ^retrieve_smem <r_smem>)
+   (<r_smem> ^disease_worsened1 <pre_disease_worsened1>
+	     ^disease_worsened2 <pre_disease_worsened2>
+	     ^disease_worsened3 <pre_disease_worsened3>)
+   (<out_link> ^disease_worsened1 <pre_disp_disease_worsened1>
+	     ^disease_worsened2 <pre_disp_disease_worsened2>
+	     ^disease_worsened3 <pre_disp_disease_worsened3>)
+-->
+   (<r_smem> ^disease_worsened1 <pre_disease_worsened1> - <disease_worsened1>
+	     ^disease_worsened2 <pre_disease_worsened2> - <disease_worsened2>
+	     ^disease_worsened3 <pre_disease_worsened3> - <disease_worsened3>)
+   (<out_link> ^disease_worsened1 <pre_disp_disease_worsened1> - <disease_worsened1>
+	     ^disease_worsened2 <pre_disp_disease_worsened2> - <disease_worsened2>
+	     ^disease_worsened3 <pre_disp_disease_worsened3> - <disease_worsened3>)
+   (<s> ^io-link-status retrieved_item_info - retrieved_related_disease)
+}
+
+###################################################################################################
+###################################################################################################
+# Entertainment
+###################################################################################################
+###################################################################################################
+#==================================================================================================
+# Reward
+#==================================================================================================
+sp {moral_reasoner*propose*reward
+   (state <s> ^name moral_reasoner <agent>
+              ^io.input-link.rl <rl>
+              ^io-link-status retrieved_user_basic_info)
+   (<agent> ^get_input <get_in>)
+   (<get_in> ^mission |Entertainment|)
+   (<rl> ^rl_dance <score_dance> ^rl_sing <score_sing> ^rl_play <score_play>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name reward
+	 ^dance <score_dance>
+         ^sing <score_sing>
+         ^play <score_play>)
+}
+
+sp {moral_reasoner*apply*reward
+   (state <s> ^name moral_reasoner <agent>
+              ^operator <o>
+	      ^io.output-link <out_link>
+              ^io-link-status retrieved_user_basic_info)
+   (<agent> ^temp_val <temp>)
+   (<temp> ^score_dance <pre_dance>
+           ^score_sing <pre_sing>
+           ^score_play <pre_play>)
+   (<o> ^name reward
+	 ^dance <score_dance>
+         ^sing <score_sing>
+         ^play <score_play>)
+   (<out_link> ^score_dance <disp_dance>
+             ^score_sing <disp_sing>
+             ^score_play <disp_play>)
+-->
+   (<temp> ^score_dance <pre_dance> - <score_dance>
+           ^score_sing <pre_sing> - <score_sing>
+           ^score_play <pre_play> - <score_play>)
+   (<out_link> ^score_dance <disp_dance> - <score_dance>
+             ^score_sing <disp_sing> - <score_sing>
+             ^score_play <disp_play> - <score_play>)
+   (<s> ^io-link-status retrieved_user_basic_info - rewarded)
+}
+
+#==================================================================================================
+# Robot behaviors: dance, sing, play.
+#==================================================================================================
+sp {moral_reasoner*propose*behavior
+   (state <s> ^name moral_reasoner <agent>
+              ^behavior.name <behavior>
+              ^io-link-status rewarded)
+   (<agent> ^get_input <get_in>)
+   (<get_in> ^mission |Entertainment|)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name behavior
+	 ^behavior_name <behavior>)
+}
+
+sp {moral_reasoner*rl*dance
+   :template
+   (state <s> ^name moral_reasoner <agent>
+              ^operator <o> +
+              ^io-link-status rewarded)
+   (<agent> ^get_input <get_in>
+            ^temp_val <temp>)
+   (<get_in> ^mission |Entertainment|)
+   (<temp> ^score_dance <score_dance>)
+   (<o> ^name behavior
+	 ^behavior_name dance)
+-->
+   (<s> ^operator <o> = <score_dance>)
+}
+
+sp {moral_reasoner*rl*sing
+   :template
+   (state <s> ^name moral_reasoner <agent>
+              ^operator <o> +
+              ^io-link-status rewarded)
+   (<agent> ^get_input <get_in>
+            ^temp_val <temp>)
+   (<get_in> ^mission |Entertainment|)
+   (<temp> ^score_sing <score_sing>)
+   (<o> ^name behavior
+	 ^behavior_name sing)
+-->
+   (<s> ^operator <o> = <score_sing>)
+}
+
+sp {moral_reasoner*rl*play
+   :template
+   (state <s> ^name moral_reasoner <agent>
+              ^operator <o> +
+              ^io-link-status rewarded)
+   (<agent> ^get_input <get_in>
+            ^temp_val <temp>)
+   (<get_in> ^mission |Entertainment|)
+   (<temp> ^score_play <score_play>)
+   (<o> ^name behavior
+	 ^behavior_name play)
+-->
+   (<s> ^operator <o> = <score_play>)
+}
+
+sp {moral_reasoner*apply*behavior
+   (state <s> ^name moral_reasoner
+              ^operator <o>
+	      ^io.output-link <out_link>
+              ^io-link-status rewarded)
+   (<o> ^name behavior
+	 ^behavior_name <behavior>)
+   (<out_link> ^behavior <disp_behavior>)
+-->
+   (<out_link> ^behavior <disp_behavior> - <behavior>)
+   (<s> ^io-link-status rewarded - behaved)
+}
+
+###################################################################################################
+# Evaluate Entertainment by Kim's 10 moral rules
+# Unrelated moral rules: 1,2,3,4,5,6,7,8,9
+# Related moral rules  : 10
+###################################################################################################
+
+sp {moral_reasoner*propose*entertainment
+   (state <s> ^name moral_reasoner <agent>
+              ^io-link-status behaved)
+   (<agent> ^get_input <get_in>)
+   (<get_in> ^mission |Entertainment|)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name entertainmentEvaluation)
+}
+
+gp {moral_reasoner*apply*entertainment_eval
+   (state <s> ^name moral_reasoner
+              ^operator <o>
+              ^mrule <mrule>
+              ^moral_case.entertainment <rule>
+              ^io-link-status behaved)
+   (<o> ^name entertainmentEvaluation)
+   (<rule> ^name [1 2 3 4 5 6 7 8 9 10]
+           ^name <rule_no>
+           ^obey <ob_score>
+           ^disobey <dis_score>)
+   (<mrule> ^name [1 2 3 4 5 6 7 8 9 10]
+            ^name <rule_no>
+            ^obey <ob>
+            ^disobey <dis>)
+-->
+   (<mrule> ^obey <ob> - <ob_score>
+            ^disobey <dis> - <dis_score>)
+   (<s> ^io-link-status behaved - eds_eval_done)
+}
+
+gp {moral_reasoner*apply*entertainment_eval
+   (state <s> ^name moral_reasoner
+              ^operator <o>
+              ^mrule <mrule>
+              ^moral_case.entertainment <rule>
+              ^io-link-status behaved)
+   (<o> ^name entertainmentEvaluation)
+   (<rule> ^name [1 2 3 4 5 6 7 8 9 10]
+           ^name <rule_no>
+           ^obey <ob_score>
+           ^disobey <dis_score>)
+   (<mrule> ^name [1 2 3 4 5 6 7 8 9 10]
+            ^name <rule_no>
+            ^obey <ob>
+            ^disobey <dis>)
+-->
+   (<mrule> ^obey <ob> - <ob_score>
+            ^disobey <dis> - <dis_score>)
+   (<s> ^io-link-status behaved - eds_eval_done)
+}
+
+###################################################################################################
+###################################################################################################
+# Security: User authorization
+###################################################################################################
+###################################################################################################
+#==================================================================================================
+# If user is NOT a family member, then "authorization" = no
+#==================================================================================================
+sp {moral_reasoner*propose*authorization_check_1
+   (state <s> ^name moral_reasoner <agent>
+              ^io-link-status retrieved_requested_info)
+   (<agent> ^get_input <get_in>)
+   (<get_in> ^user_name <> |Juho Kim| <> |Seonmi Lee| <> |Jinwoo Kim| <> |Mina Kim|)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name authorization_check_1
+	 ^authorization no)
+}
+
+sp {moral_reasoner*apply*authorization_check_1
+   (state <s> ^name moral_reasoner <agent>
+              ^operator <o>
+	      ^io.output-link <out_link>
+              ^io-link-status retrieved_requested_info)
+   (<o> ^name authorization_check_1
+	^authorization <no>)
+   (<agent> ^temp_val <temp>)
+   (<temp> ^authorization <pre_val>)
+   (<out_link> ^authorization <disp_val>)
+-->
+   (<temp> ^authorization <pre_val> - <no>)
+   (<out_link> ^authorization <disp_val> - <no>)
+   (<s> ^io-link-status retrieved_requested_info - authorization_checked)
+}
+
+#==================================================================================================
+# If user is a family member but not a person who is complainted, then "authorization" = yes
+#==================================================================================================
+sp {moral_reasoner*propose*authorization_check_2
+   (state <s> ^name moral_reasoner <agent>
+              ^io-link-status retrieved_requested_info)
+   (<agent> ^get_input <get_in>
+            ^complaint_input <com_in>)
+   (<com_in> ^who_involved <user>)
+   (<get_in> ^user_name << |Juho Kim| |Seonmi Lee| |Jinwoo Kim| |Mina Kim| >>
+             ^user_name <> <user>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name authorization_check_2
+	 ^authorization yes)
+}
+
+sp {moral_reasoner*apply*authorization_check_2
+   (state <s> ^name moral_reasoner <agent>
+              ^operator <o>
+	      ^io.output-link <out_link>
+              ^io-link-status retrieved_requested_info)
+   (<o> ^name authorization_check_2
+	^authorization <yes>)
+   (<agent> ^temp_val <temp>)
+   (<temp> ^authorization <pre_val>)
+   (<out_link> ^authorization <disp_val>)
+-->
+   (<temp> ^authorization <pre_val> - <yes>)
+   (<out_link> ^authorization <disp_val> - <yes>)
+   (<s> ^io-link-status retrieved_requested_info - authorization_checked)
+}
+
+#==================================================================================================
+# If there is a complaint and user is the person who has been complainted, then "authorization" = no
+#==================================================================================================
+sp {moral_reasoner*propose*authorization_check_3
+   (state <s> ^name moral_reasoner <agent>
+              ^io-link-status retrieved_requested_info)
+   (<agent> ^get_input <get_in>
+            ^complaint_input <com_in>)
+   (<com_in> ^complaintSTT yes
+             ^who_involved <user>
+             ^what_involved <info>)
+   (<get_in> ^user_name <user>
+             ^order_name <info>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name authorization_check_3
+	 ^authorization no)
+}
+
+sp {moral_reasoner*apply*authorization_check_3
+   (state <s> ^name moral_reasoner <agent>
+              ^operator <o>
+	      ^io.output-link <out_link>
+              ^io-link-status retrieved_requested_info)
+   (<o> ^name authorization_check_3
+	^authorization <no>)
+   (<agent> ^temp_val <temp>)
+   (<temp> ^authorization <pre_val>)
+   (<out_link> ^authorization <disp_val>)
+-->
+   (<temp> ^authorization <pre_val> - <no>)
+   (<out_link> ^authorization <disp_val> - <no>)
+   (<s> ^io-link-status retrieved_requested_info - authorization_checked)
+}
+
+#==================================================================================================
+# If there is a complaint and same user but different order, then "authorization" = yes
+#==================================================================================================
+sp {moral_reasoner*propose*authorization_check_4
+   (state <s> ^name moral_reasoner <agent>
+              ^io-link-status retrieved_requested_info)
+   (<agent> ^get_input <get_in>
+            ^complaint_input <com_in>)
+   (<com_in> ^complaintSTT yes
+             ^who_involved <user>
+             ^what_involved <info>)
+   (<get_in> ^user_name <user>
+             ^order_name <> <info>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name authorization_check_4
+	 ^authorization yes)
+}
+
+sp {moral_reasoner*apply*authorization_check_4
+   (state <s> ^name moral_reasoner <agent>
+              ^operator <o>
+	      ^io.output-link <out_link>
+              ^io-link-status retrieved_requested_info)
+   (<o> ^name authorization_check_4
+	^authorization <yes>)
+   (<agent> ^temp_val <temp>)
+   (<temp> ^authorization <pre_val>)
+   (<out_link> ^authorization <disp_val>)
+-->
+   (<temp> ^authorization <pre_val> - <yes>)
+   (<out_link> ^authorization <disp_val> - <yes>)
+   (<s> ^io-link-status retrieved_requested_info - authorization_checked)
+}
+
+###################################################################################################
+# Evaluate Security by Kim's 10 moral rules
+# Unrelated moral rules: 4,5,6,8
+# Related moral rules  : 1,2,3,7,9,10
+###################################################################################################
+
+sp {moral_reasoner*propose*security_eval
+   (state <s> ^name moral_reasoner <agent>
+              ^io-link-status authorization_checked)
+   (<agent> ^get_input <get_in>)
+   (<get_in> ^mission |Information|)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name securityEvaluation)
+}
+
+gp {moral_reasoner*apply*goodsecurity_eval
+   (state <s> ^name moral_reasoner <agent>
+              ^operator <o>
+              ^mrule <mrule>
+              ^moral_case.sgood <rule>
+              ^io-link-status authorization_checked)
+   (<agent> ^temp_val <temp>)
+   (<temp> ^authorization yes)
+   (<o> ^name securityEvaluation)
+   (<rule> ^name [1 2 3 4 5 6 7 8 9 10]
+           ^name <rule_no>
+           ^obey <ob_score>
+           ^disobey <dis_score>)
+   (<mrule> ^name [1 2 3 4 5 6 7 8 9 10]
+            ^name <rule_no>
+            ^obey <ob>
+            ^disobey <dis>)
+-->
+   (<mrule> ^obey <ob> - <ob_score>
+            ^disobey <dis> - <dis_score>)
+   (<s> ^io-link-status authorization_checked - eds_eval_done)
+}
+
+gp {moral_reasoner*apply*badsecurity_eval
+   (state <s> ^name moral_reasoner <agent>
+              ^operator <o>
+              ^mrule <mrule>
+              ^moral_case.sbad <rule>
+              ^io-link-status authorization_checked)
+   (<agent> ^temp_val <temp>)
+   (<temp> ^authorization no)
+   (<o> ^name securityEvaluation)
+   (<rule> ^name [1 2 3 4 5 6 7 8 9 10]
+           ^name <rule_no>
+           ^obey <ob_score>
+           ^disobey <dis_score>)
+   (<mrule> ^name [1 2 3 4 5 6 7 8 9 10]
+            ^name <rule_no>
+            ^obey <ob>
+            ^disobey <dis>)
+-->
+   (<mrule> ^obey <ob> - <ob_score>
+            ^disobey <dis> - <dis_score>)
+   (<s> ^io-link-status authorization_checked - eds_eval_done)
+}
+
+###################################################################################################
+###################################################################################################
+# Healthcare (Delivery): User healthy check
+###################################################################################################
+###################################################################################################
+
+#==================================================================================================
+# Retrieved disease: if the item is game item, then disease = no
+#==================================================================================================
+sp {moral_reasoner*propose*item_retrieved_disease
+   (state <s> ^name moral_reasoner <agent>
+              ^io-link-status retrieved_item_info
+              ^smem.command <cmd>)
+   (<agent> ^get_input <get_in>)
+   (<get_in> ^order_name <gamename>)
+   (<cmd> ^store.store_game <game>)
+   (<game> ^game_name <gamename>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name item_retrieved_disease)
+}
+
+sp {moral_reasoner*apply*item_retrieved_disease
+   (state <s> ^name moral_reasoner <agent>
+              ^operator <o>
+	      ^io.output-link <out_link>
+              ^io-link-status retrieved_item_info)
+   (<o> ^name item_retrieved_disease)
+   (<agent> ^retrieve_smem <r_smem>)
+   (<r_smem> ^disease_worsened1 <pre_disease_worsened1>
+	     ^disease_worsened2 <pre_disease_worsened2>
+	     ^disease_worsened3 <pre_disease_worsened3>)
+   (<out_link> ^disease_worsened1 <pre_disp_disease_worsened1>
+	     ^disease_worsened2 <pre_disp_disease_worsened2>
+	     ^disease_worsened3 <pre_disp_disease_worsened3>)
+-->
+   (<r_smem> ^disease_worsened1 <pre_disease_worsened1> - no1
+	     ^disease_worsened2 <pre_disease_worsened2> - no2
+	     ^disease_worsened3 <pre_disease_worsened3> - no3)
+   (<out_link> ^disease_worsened1 <pre_disp_disease_worsened1> - no1
+	     ^disease_worsened2 <pre_disp_disease_worsened2> - no2
+	     ^disease_worsened3 <pre_disp_disease_worsened3> - no3)
+   (<s> ^io-link-status retrieved_item_info - retrieved_related_disease)
+}
+
+#==================================================================================================
+# Healthy check 0: if the item is game item (same user but different order), then "healthy" = yes
+#==================================================================================================
+sp {moral_reasoner*propose*healthy_check_0
+   (state <s> ^name moral_reasoner <agent>
+              ^io-link-status retrieved_related_disease
+              ^smem.command <cmd>)
+   (<agent> ^get_input <get_in>
+            ^complaint_input <com_in>)
+   (<get_in> ^user_name <user>
+             ^order_name <gamename>)
+   (<cmd> ^store.store_game <game>)
+   (<game> ^game_name <gamename>)
+   (<com_in> ^complaintSTT << yes no >>
+             ^who_involved <user>
+             ^what_involved <> <gamename>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name healthy_check_0
+	 ^is_item_good_for_health yes)		# healthy item
+}
+
+sp {moral_reasoner*apply*healthy_check_0
+   (state <s> ^name moral_reasoner <agent>
+              ^operator <o>
+	      ^io.output-link <out_link>
+              ^io-link-status retrieved_related_disease)
+   (<o> ^name healthy_check_0
+	 ^is_item_good_for_health <yes>)
+   (<agent> ^temp_val <temp>)
+   (<temp> ^is_item_good_for_health <pre_val>)
+   (<out_link> ^is_item_good_for_health <disp_val>)
+-->
+   (<temp> ^is_item_good_for_health <pre_val> - <yes>)
+   (<out_link> ^is_item_good_for_health <disp_val> - <yes>)
+   (<s> ^io-link-status retrieved_related_disease - healthy_checked)
+}
+
+#==================================================================================================
+# Healthy check 1: if the dish of food is bad, then "healthy" = no
+#==================================================================================================
+sp {moral_reasoner*propose*healthy_check_1
+   (state <s> ^name moral_reasoner <agent>
+              ^io-link-status retrieved_related_disease)
+   (<agent> ^retrieve_smem <r_smem>)
+   (<r_smem> ^disease_worsened1 <b1>
+             ^disease_worsened2 { <b2> <> <b1> }
+             ^disease_worsened3 { <b3> <> <b1> <> <b2> }
+             ^user_disease <b1>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name healthy_check_1
+	 ^is_item_good_for_health no)		# unhealthy food (bad item)
+}
+
+sp {moral_reasoner*apply*healthy_check_1
+   (state <s> ^name moral_reasoner <agent>
+              ^operator <o>
+	      ^io.output-link <out_link>
+              ^io-link-status retrieved_related_disease)
+   (<o> ^name healthy_check_1
+	^is_item_good_for_health <no>)
+   (<agent> ^temp_val <temp>)
+   (<temp> ^is_item_good_for_health <pre_val>)
+   (<out_link> ^is_item_good_for_health <disp_val>)
+-->
+   (<temp> ^is_item_good_for_health <pre_val> - <no>)
+   (<out_link> ^is_item_good_for_health <disp_val> - <no>)
+   (<s> ^io-link-status retrieved_related_disease - healthy_checked)
+}
+
+#==================================================================================================
+# Healthy check 2: if the dish of food is NOT bad, then "healthy" = yes
+#==================================================================================================
+sp {moral_reasoner*propose*healthy_check_2
+   (state <s> ^name moral_reasoner <agent>
+              ^io-link-status retrieved_related_disease)
+   (<agent> ^retrieve_smem <r_smem>
+            ^get_input <get_in>
+            ^complaint_input <com_in>)
+   (<r_smem> ^disease_worsened1 <b1>
+	^disease_worsened2 { <b2> <> <b1> }
+	^disease_worsened3 { <b3> <> <b1> <> <b2> }
+	^user_disease { <> <b1> <> <b2> <> <b3> })
+   (<get_in> ^order_name <info>)
+   (<com_in> ^what_involved <> <info>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name healthy_check_2
+	 ^is_item_good_for_health yes)		# healthy food (good item)
+}
+
+sp {moral_reasoner*apply*healthy_check_2
+   (state <s> ^name moral_reasoner <agent>
+              ^operator <o>
+	      ^io.output-link <out_link>
+              ^io-link-status retrieved_related_disease)
+   (<o> ^name healthy_check_2
+	^is_item_good_for_health <yes>)
+   (<agent> ^temp_val <temp>)
+   (<temp> ^is_item_good_for_health <pre_val>)
+   (<out_link> ^is_item_good_for_health <disp_val>)
+-->
+   (<temp> ^is_item_good_for_health <pre_val> - <yes>)
+   (<out_link> ^is_item_good_for_health <disp_val> - <yes>)
+   (<s> ^io-link-status retrieved_related_disease - healthy_checked)
+}
+
+#==================================================================================================
+# Healthy check 3: if there is a complaint and user is the person who has been complainted, then "healthy" = no
+# same user and same order
+#==================================================================================================
+sp {moral_reasoner*propose*healthy_check_3
+   (state <s> ^name moral_reasoner <agent>
+              ^io-link-status retrieved_related_disease)
+   (<agent> ^get_input <get_in>
+            ^complaint_input <com_in>)
+   (<get_in> ^user_name <user>
+             ^order_name <info>)
+   (<com_in> ^complaintSTT yes
+             ^who_involved <user>
+             ^what_involved <info>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name healthy_check_3
+	 ^is_item_good_for_health no)		# bad item
+}
+
+sp {moral_reasoner*apply*healthy_check_3
+   (state <s> ^name moral_reasoner <agent>
+              ^operator <o>
+	      ^io.output-link <out_link>
+              ^io-link-status retrieved_related_disease)
+   (<o> ^name healthy_check_3
+	^is_item_good_for_health <no>)
+   (<agent> ^temp_val <temp>)
+   (<temp> ^is_item_good_for_health <pre_val>)
+   (<out_link> ^is_item_good_for_health <disp_val>)
+-->
+   (<temp> ^is_item_good_for_health <pre_val> - <no>)
+   (<out_link> ^is_item_good_for_health <disp_val> - <no>)
+   (<s> ^io-link-status retrieved_related_disease - healthy_checked)
+}
+
+#==================================================================================================
+# Healthy check 4: if the item is game item (different user but same order), then "healthy" = yes
+#==================================================================================================
+sp {moral_reasoner*propose*healthy_check_4
+   (state <s> ^name moral_reasoner <agent>
+              ^io-link-status retrieved_related_disease
+              ^smem.command <cmd>)
+   (<agent> ^get_input <get_in>
+            ^complaint_input <com_in>)
+   (<get_in> ^user_name <user>
+             ^order_name <gamename>)
+   (<cmd> ^store.store_game <game>)
+   (<game> ^game_name <gamename>)
+   (<com_in> ^complaintSTT << yes no >>
+             ^who_involved <> <user>
+             ^what_involved <gamename>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name healthy_check_4
+	 ^is_item_good_for_health yes)		# healthy item
+}
+
+sp {moral_reasoner*apply*healthy_check_4
+   (state <s> ^name moral_reasoner <agent>
+              ^operator <o>
+	      ^io.output-link <out_link>
+              ^io-link-status retrieved_related_disease)
+   (<o> ^name healthy_check_4
+	 ^is_item_good_for_health <yes>)
+   (<agent> ^temp_val <temp>)
+   (<temp> ^is_item_good_for_health <pre_val>)
+   (<out_link> ^is_item_good_for_health <disp_val>)
+-->
+   (<temp> ^is_item_good_for_health <pre_val> - <yes>)
+   (<out_link> ^is_item_good_for_health <disp_val> - <yes>)
+   (<s> ^io-link-status retrieved_related_disease - healthy_checked)
+}
+
+###################################################################################################
+# Evaluate Healthcare (Delivery) by Kim's 10 moral rules
+# Unrelated moral rules: 2,4,7,8
+# Related moral rules  : 1,3,5,6,9,10
+###################################################################################################
+
+sp {moral_reasoner*propose*item_eval
+   (state <s> ^name moral_reasoner <agent>
+              ^io-link-status healthy_checked)
+   (<agent> ^get_input <get_in>)
+   (<get_in> ^mission |Delivery|)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name itemEvaluation)
+}
+
+gp {moral_reasoner*apply*goodItem_eval
+   (state <s> ^name moral_reasoner <agent>
+              ^operator <o>
+              ^mrule <mrule>
+              ^moral_case.fdgood <rule>
+              ^io-link-status healthy_checked)
+   (<agent> ^temp_val <temp>)
+   (<temp> ^is_item_good_for_health yes)
+   (<o> ^name itemEvaluation)
+   (<rule> ^name [1 2 3 4 5 6 7 8 9 10]
+           ^name <rule_no>
+           ^obey <ob_score>
+           ^disobey <dis_score>)
+   (<mrule> ^name [1 2 3 4 5 6 7 8 9 10]
+            ^name <rule_no>
+            ^obey <ob>
+            ^disobey <dis>)
+-->
+   (<mrule> ^obey <ob> - <ob_score>
+            ^disobey <dis> - <dis_score>)
+   (<s> ^io-link-status healthy_checked - eds_eval_done)
+}
+
+gp {moral_reasoner*apply*badItem_eval
+   (state <s> ^name moral_reasoner <agent>
+              ^operator <o>
+              ^mrule <mrule>
+              ^moral_case.fdbad <rule>
+              ^io-link-status healthy_checked)
+   (<agent> ^temp_val <temp>)
+   (<temp> ^is_item_good_for_health no)
+   (<o> ^name itemEvaluation)
+   (<rule> ^name [1 2 3 4 5 6 7 8 9 10]
+           ^name <rule_no>
+           ^obey <ob_score>
+           ^disobey <dis_score>)
+   (<mrule> ^name [1 2 3 4 5 6 7 8 9 10]
+            ^name <rule_no>
+            ^obey <ob>
+            ^disobey <dis>)
+-->
+   (<mrule> ^obey <ob> - <ob_score>
+            ^disobey <dis> - <dis_score>)
+   (<s> ^io-link-status healthy_checked - eds_eval_done)
+}
+
+###################################################################################################
+###################################################################################################
+# Compute score
+###################################################################################################
+###################################################################################################
+
+#==================================================================================================
+# Sum with rule 1
+#==================================================================================================
+sp {moral_reasoner*propose*sum1
+   (state <s> ^name moral_reasoner
+              ^mrule <mrule>
+              ^io-link-status eds_eval_done)
+   (<mrule> ^name 1
+           ^obey <ob>
+           ^disobey <dis>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name sum1
+         ^obey <ob>
+         ^disobey <dis>)
+}
+
+sp {moral_reasoner*apply*sum1
+   (state <s> ^name moral_reasoner
+              ^operator <o>
+              ^sum_eds <sum>
+              ^io-link-status eds_eval_done)
+   (<o> ^name sum1
+         ^obey <ob>
+         ^disobey <dis>)
+   (<sum> ^obey <monitor_obey_value>
+          ^disobey <monitor_disobey_value>)
+-->
+   (<sum> ^obey <monitor_obey_value> - (+ <ob> <monitor_obey_value>)
+          ^disobey <monitor_disobey_value> - (+ <dis> <monitor_disobey_value>))
+   (<s> ^io-link-status eds_eval_done - sum1)
+}
+
+#==================================================================================================
+# Sum with rule 2
+#==================================================================================================
+sp {moral_reasoner*propose*sum2
+   (state <s> ^name moral_reasoner
+              ^mrule <mrule>
+              ^io-link-status sum1)
+   (<mrule> ^name 2
+           ^obey <ob>
+           ^disobey <dis>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name sum2
+         ^obey <ob>
+         ^disobey <dis>)
+}
+
+sp {moral_reasoner*apply*sum2
+   (state <s> ^name moral_reasoner
+              ^operator <o>
+              ^sum_eds <sum>
+              ^io-link-status sum1)
+   (<o> ^name sum2
+         ^obey <ob>
+         ^disobey <dis>)
+   (<sum> ^obey <monitor_obey_value>
+          ^disobey <monitor_disobey_value>)
+-->
+   (<sum> ^obey <monitor_obey_value> - (+ <ob> <monitor_obey_value>)
+          ^disobey <monitor_disobey_value> - (+ <dis> <monitor_disobey_value>))
+   (<s> ^io-link-status sum1 - sum2)
+}
+
+#==================================================================================================
+# Sum with rule 3
+#==================================================================================================
+sp {moral_reasoner*propose*sum3
+   (state <s> ^name moral_reasoner
+              ^mrule <mrule>
+              ^io-link-status sum2)
+   (<mrule> ^name 3
+           ^obey <ob>
+           ^disobey <dis>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name sum3
+         ^obey <ob>
+         ^disobey <dis>)
+}
+
+sp {moral_reasoner*apply*sum3
+   (state <s> ^name moral_reasoner
+              ^operator <o>
+              ^sum_eds <sum>
+              ^io-link-status sum2)
+   (<o> ^name sum3
+         ^obey <ob>
+         ^disobey <dis>)
+   (<sum> ^obey <monitor_obey_value>
+          ^disobey <monitor_disobey_value>)
+-->
+   (<sum> ^obey <monitor_obey_value> - (+ <ob> <monitor_obey_value>)
+          ^disobey <monitor_disobey_value> - (+ <dis> <monitor_disobey_value>))
+   (<s> ^io-link-status sum2 - sum3)
+}
+
+#==================================================================================================
+# Sum with rule 4
+#==================================================================================================
+sp {moral_reasoner*propose*sum4
+   (state <s> ^name moral_reasoner
+              ^mrule <mrule>
+              ^io-link-status sum3)
+   (<mrule> ^name 4
+           ^obey <ob>
+           ^disobey <dis>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name sum4
+         ^obey <ob>
+         ^disobey <dis>)
+}
+
+sp {moral_reasoner*apply*sum4
+   (state <s> ^name moral_reasoner
+              ^operator <o>
+              ^sum_eds <sum>
+              ^io-link-status sum3)
+   (<o> ^name sum4
+         ^obey <ob>
+         ^disobey <dis>)
+   (<sum> ^obey <monitor_obey_value>
+          ^disobey <monitor_disobey_value>)
+-->
+   (<sum> ^obey <monitor_obey_value> - (+ <ob> <monitor_obey_value>)
+          ^disobey <monitor_disobey_value> - (+ <dis> <monitor_disobey_value>))
+   (<s> ^io-link-status sum3 - sum4)
+}
+
+#==================================================================================================
+# Sum with rule 5
+#==================================================================================================
+sp {moral_reasoner*propose*sum5
+   (state <s> ^name moral_reasoner
+              ^mrule <mrule>
+              ^io-link-status sum4)
+   (<mrule> ^name 5
+           ^obey <ob>
+           ^disobey <dis>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name sum5
+         ^obey <ob>
+         ^disobey <dis>)
+}
+
+sp {moral_reasoner*apply*sum5
+   (state <s> ^name moral_reasoner
+              ^operator <o>
+              ^sum_eds <sum>
+              ^io-link-status sum4)
+   (<o> ^name sum5
+         ^obey <ob>
+         ^disobey <dis>)
+   (<sum> ^obey <monitor_obey_value>
+          ^disobey <monitor_disobey_value>)
+-->
+   (<sum> ^obey <monitor_obey_value> - (+ <ob> <monitor_obey_value>)
+          ^disobey <monitor_disobey_value> - (+ <dis> <monitor_disobey_value>))
+   (<s> ^io-link-status sum4 - sum5)
+}
+
+#==================================================================================================
+# Sum with rule 6
+#==================================================================================================
+sp {moral_reasoner*propose*sum6
+   (state <s> ^name moral_reasoner
+              ^mrule <mrule>
+              ^io-link-status sum5)
+   (<mrule> ^name 6
+           ^obey <ob>
+           ^disobey <dis>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name sum6
+         ^obey <ob>
+         ^disobey <dis>)
+}
+
+sp {moral_reasoner*apply*sum6
+   (state <s> ^name moral_reasoner
+              ^operator <o>
+              ^sum_eds <sum>
+              ^io-link-status sum5)
+   (<o> ^name sum6
+         ^obey <ob>
+         ^disobey <dis>)
+   (<sum> ^obey <monitor_obey_value>
+          ^disobey <monitor_disobey_value>)
+-->
+   (<sum> ^obey <monitor_obey_value> - (+ <ob> <monitor_obey_value>)
+          ^disobey <monitor_disobey_value> - (+ <dis> <monitor_disobey_value>))
+   (<s> ^io-link-status sum5 - sum6)
+}
+
+#==================================================================================================
+# Sum with rule 7
+#==================================================================================================
+sp {moral_reasoner*propose*sum7
+   (state <s> ^name moral_reasoner
+              ^mrule <mrule>
+              ^io-link-status sum6)
+   (<mrule> ^name 7
+           ^obey <ob>
+           ^disobey <dis>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name sum7
+         ^obey <ob>
+         ^disobey <dis>)
+}
+
+sp {moral_reasoner*apply*sum7
+   (state <s> ^name moral_reasoner
+              ^operator <o>
+              ^sum_eds <sum>
+              ^io-link-status sum6)
+   (<o> ^name sum7
+         ^obey <ob>
+         ^disobey <dis>)
+   (<sum> ^obey <monitor_obey_value>
+          ^disobey <monitor_disobey_value>)
+-->
+   (<sum> ^obey <monitor_obey_value> - (+ <ob> <monitor_obey_value>)
+          ^disobey <monitor_disobey_value> - (+ <dis> <monitor_disobey_value>))
+   (<s> ^io-link-status sum6 - sum7)
+}
+
+#==================================================================================================
+# Sum with rule 8
+#==================================================================================================
+sp {moral_reasoner*propose*sum8
+   (state <s> ^name moral_reasoner
+              ^mrule <mrule>
+              ^io-link-status sum7)
+   (<mrule> ^name 8
+           ^obey <ob>
+           ^disobey <dis>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name sum8
+         ^obey <ob>
+         ^disobey <dis>)
+}
+
+sp {moral_reasoner*apply*sum8
+   (state <s> ^name moral_reasoner
+              ^operator <o>
+              ^sum_eds <sum>
+              ^io-link-status sum7)
+   (<o> ^name sum8
+         ^obey <ob>
+         ^disobey <dis>)
+   (<sum> ^obey <monitor_obey_value>
+          ^disobey <monitor_disobey_value>)
+-->
+   (<sum> ^obey <monitor_obey_value> - (+ <ob> <monitor_obey_value>)
+          ^disobey <monitor_disobey_value> - (+ <dis> <monitor_disobey_value>))
+   (<s> ^io-link-status sum7 - sum8)
+}
+
+#==================================================================================================
+# Sum with rule 9
+#==================================================================================================
+sp {moral_reasoner*propose*sum9
+   (state <s> ^name moral_reasoner
+              ^mrule <mrule>
+              ^io-link-status sum8)
+   (<mrule> ^name 9
+           ^obey <ob>
+           ^disobey <dis>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name sum9
+         ^obey <ob>
+         ^disobey <dis>)
+}
+
+sp {moral_reasoner*apply*sum9
+   (state <s> ^name moral_reasoner
+              ^operator <o>
+              ^sum_eds <sum>
+              ^io-link-status sum8)
+   (<o> ^name sum9
+         ^obey <ob>
+         ^disobey <dis>)
+   (<sum> ^obey <monitor_obey_value>
+          ^disobey <monitor_disobey_value>)
+-->
+   (<sum> ^obey <monitor_obey_value> - (+ <ob> <monitor_obey_value>)
+          ^disobey <monitor_disobey_value> - (+ <dis> <monitor_disobey_value>))
+   (<s> ^io-link-status sum8 - sum9)
+}
+
+#==================================================================================================
+# Sum with rule 10
+#==================================================================================================
+sp {moral_reasoner*propose*sum10
+   (state <s> ^name moral_reasoner
+              ^mrule <mrule>
+              ^io-link-status sum9)
+   (<mrule> ^name 10
+           ^obey <ob>
+           ^disobey <dis>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name sum10
+         ^obey <ob>
+         ^disobey <dis>)
+}
+
+sp {moral_reasoner*apply*sum10
+   (state <s> ^name moral_reasoner
+              ^operator <o>
+              ^sum_eds <sum>
+              ^io-link-status sum9)
+   (<o> ^name sum10
+         ^obey <ob>
+         ^disobey <dis>)
+   (<sum> ^obey <monitor_obey_value>
+          ^disobey <monitor_disobey_value>)
+-->
+   (<sum> ^obey <monitor_obey_value> - (+ <ob> <monitor_obey_value>)
+          ^disobey <monitor_disobey_value> - (+ <dis> <monitor_disobey_value>))
+   (<s> ^io-link-status sum9 - sum10)
+}
+
+#==================================================================================================
+# Put sum to output link
+#==================================================================================================
+sp {moral_reasoner*propose*sum
+   (state <s> ^name moral_reasoner
+              ^sum_eds <sum>
+              ^io-link-status sum10)
+   (<sum> ^obey <monitor_obey_value>
+          ^disobey <monitor_disobey_value>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name sum
+         ^obey <monitor_obey_value>
+         ^disobey <monitor_disobey_value>)
+}
+
+sp {moral_reasoner*apply*sum
+   (state <s> ^name moral_reasoner
+              ^operator <o>
+              ^io.output-link <out_link>
+              ^sum_eds <sum>
+              ^io-link-status sum10)
+   (<o> ^name sum
+         ^obey <monitor_obey_value>
+         ^disobey <monitor_disobey_value>)
+   (<out_link> ^obey <obey_value>
+             ^disobey <disobey_value>)
+-->
+   (<out_link> ^obey <obey_value> - <monitor_obey_value>
+             ^disobey <disobey_value> - <monitor_disobey_value>)
+   (<s> ^io-link-status sum10 - summed)
+}
+
+###################################################################################################
+###################################################################################################
+# Moral decision
+###################################################################################################
+###################################################################################################
+#==================================================================================================
+# If obey score is greater than disobey score,
+# then propose mdecision obey and put to output link
+#==================================================================================================
+
+sp {moral_reasoner*propose*mdecision_obey
+   (state <s> ^name moral_reasoner
+              ^sum_eds <sum>
+              ^io-link-status summed)
+   (<sum> ^obey <monitor_obey_value>
+          ^disobey <= <monitor_obey_value>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name mdecision_obey
+         ^mdecision obey)
+}
+
+sp {moral_reasoner*apply*mdecision_obey
+   (state <s> ^name moral_reasoner
+              ^operator <o>
+              ^io.output-link <out_link>
+              ^io-link-status summed)
+   (<o> ^name mdecision_obey
+         ^mdecision <obey>)
+   (<out_link> ^mdecision <mdecision_cmd>)
+-->
+   (<out_link> ^mdecision <mdecision_cmd> - <obey>)
+   (<s> ^io-link-status summed - decided_mdecision)
+}
+
+#==================================================================================================
+# If obey score is lesser than disobey score,
+# then propose mdecision disobey and put to output link
+#==================================================================================================
+
+sp {moral_reasoner*propose*mdecision_disobey
+   (state <s> ^name moral_reasoner
+              ^sum_eds <sum>
+              ^io-link-status summed)
+   (<sum> ^obey <monitor_obey_value>
+          ^disobey > <monitor_obey_value>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name mdecision_disobey
+         ^mdecision disobey)
+}
+
+sp {moral_reasoner*apply*mdecision_disobey
+   (state <s> ^name moral_reasoner
+              ^operator <o>
+              ^io.output-link <out_link>
+              ^io-link-status summed)
+   (<o> ^name mdecision_disobey
+         ^mdecision <disobey>)
+   (<out_link> ^mdecision <mdecision_cmd>)
+-->
+   (<out_link> ^mdecision <mdecision_cmd> - <disobey>)
+   (<s> ^io-link-status summed - decided_mdecision)
+}
+
+###################################################################################################
+# Recommend good food
+###################################################################################################
+#==================================================================================================
+# In case of obey
+#==================================================================================================
+sp {moral_reasoner*propose*recommend_obey
+   (state <s> ^name moral_reasoner
+	      ^io.output-link <out_link>
+              ^io-link-status decided_mdecision)
+   (<out_link> ^mdecision obey)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name recommend_obey)
+}
+
+sp {moral_reasoner*apply*recommend_obey
+   (state <s> ^name moral_reasoner
+              ^operator <o>
+              ^io-link-status decided_mdecision)
+   (<o> ^name recommend_obey)
+-->
+   (<s> ^io-link-status decided_mdecision - recommended)
+}
+
+#==================================================================================================
+# In case of disobey
+#==================================================================================================
+sp {moral_reasoner*propose*recommend_disobey
+   (state <s> ^name moral_reasoner <agent>
+	      ^io.output-link <out_link>
+              ^io-link-status decided_mdecision
+              ^smem.command <cmd>)
+   (<out_link> ^mdecision disobey)
+   (<cmd> ^store.store_disease_item_relationship <healthtable>)
+   (<healthtable> ^disease <disease>
+		  ^related_food <rfood>)
+   (<rfood> ^good_food1 <good_food1>
+            ^good_food2 <good_food2>
+            ^good_food3 <good_food3>)
+   (<agent> ^retrieve_smem <r_smem>)
+   (<r_smem> ^user_disease <disease>)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name recommend_disobey
+         ^recommend1 <good_food1>
+         ^recommend2 <good_food2>
+         ^recommend3 <good_food3>)
+}
+
+sp {moral_reasoner*apply*recommend_disobey
+   (state <s> ^name moral_reasoner <agent>
+              ^operator <o>
+              ^io.output-link <out_link>
+              ^io-link-status decided_mdecision)
+   (<agent> ^temp_val <temp>)
+   (<temp> ^recommend1 <pre_val1>
+           ^recommend2 <pre_val2>
+           ^recommend3 <pre_val3>)
+   (<o> ^name recommend_disobey
+         ^recommend1 <good_food1>
+         ^recommend2 <good_food2>
+         ^recommend3 <good_food3>)
+   (<out_link> ^recommend1 <re1>
+             ^recommend2 <re2>
+             ^recommend3 <re3>)
+-->
+   (<temp> ^recommend1 <pre_val1> - <good_food1>
+           ^recommend2 <pre_val2> - <good_food2>
+           ^recommend3 <pre_val3> - <good_food3>)
+   (<out_link> ^recommend1 <re1> - <good_food1>
+             ^recommend2 <re2> - <good_food2>
+             ^recommend3 <re3> - <good_food3>)
+   (<s> ^io-link-status decided_mdecision - recommended)
+}
+
+sp {moral_reasoner*propose*recommend_disobey_info
+   (state <s> ^name moral_reasoner <agent>
+	      ^io.output-link <out_link>
+              ^io-link-status decided_mdecision)
+   (<agent> ^get_input <get_in>)
+   (<get_in> ^mission |Information|)
+   (<out_link> ^mdecision disobey)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name recommend_disobey_info)
+}
+
+sp {moral_reasoner*apply*recommend_disobey_info
+   (state <s> ^name moral_reasoner <agent>
+              ^operator <o>
+              ^io-link-status decided_mdecision)
+   (<agent> ^get_input <get_in>)
+   (<get_in> ^mission |Information|)
+   (<o> ^name recommend_disobey_info)
+-->
+   (<s> ^io-link-status decided_mdecision - recommended)
+}
+
+###################################################################################################
+###################################################################################################
+# Finish task
+###################################################################################################
+###################################################################################################
+sp {moral_reasoner*propose*finish_task
+   (state <s> ^name moral_reasoner
+              ^io-link-status recommended)
+-->
+   (<s> ^operator <o> + =)
+   (<o> ^name finishTask
+         ^endMission finish)
+}
+
+sp {moral_reasoner*apply*finish_task
+   (state <s> ^name moral_reasoner
+              ^operator <o>
+	      ^io.output-link <out_link>)
+   (<o> ^name finishTask
+         ^endMission <mission>)
+   (<out_link> ^endMission <endMission>)
+-->
+   (<out_link> ^endMission <endMission> - <mission>)
+}
+
+###################################################################################################
+###################################################################################################
+# Priority
+###################################################################################################
+###################################################################################################
+# Normal case
+###################################################################################################
+#==================================================================================================
+# Action 1: when the robot is in service,
+# if a new user (who has a HIGHER priority value than previous user) makes an order,
+# then the agent decides to serve Current User first.
+#==================================================================================================
+sp {moral_reasoner*elaborate*normal_higher_priority
+   (state <s> ^name moral_reasoner <agent>
+	      ^io.output-link <out_link>)
+   (<agent> ^get_input <get_in>
+            ^pre_input <pre_in>)
+   (<get_in> ^mission <> Emergency)
+   (<pre_in> ^pre_act pending
+	     ^pre_priority { <pre_priority> <> 0 })
+   (<out_link> ^user_normal_priority { <current_priority> > <pre_priority> }
+	     ^extra_act <pre_extra>
+             ^endMission finish)
+-->
+   (<out_link> ^extra_act <pre_extra> - |your order will be served FIRST|)
+}
+
+#==================================================================================================
+# Action 2: when the robot is in service,
+# if a new user (who has a LOWER/Equal priority value than previous user) makes an order,
+# then the agent decides to serve Current User NEXT.
+#==================================================================================================
+sp {moral_reasoner*elaborate*normal_lower_priority
+   (state <s> ^name moral_reasoner <agent>
+	      ^io.output-link <out_link>)
+   (<agent> ^get_input <get_in>
+            ^pre_input <pre_in>)
+   (<get_in> ^mission <> Emergency)
+   (<pre_in> ^pre_act pending
+	     ^pre_priority { <pre_priority> <> 0 })
+   (<out_link> ^user_normal_priority { <current_priority> <= <pre_priority> }
+	     ^extra_act <pre_extra>
+             ^endMission finish)
+-->
+   (<out_link> ^extra_act <pre_extra> - |your order will be served NEXT|)
+}
+
+###################################################################################################
+# Emgergency case
+###################################################################################################
+#==================================================================================================
+# Action 1: when the robot is in service,
+# if a new user (who has a HIGHER emergency priority value than previous user) makes an order,
+# then the agent decides to serve Current User first.
+#==================================================================================================
+sp {moral_reasoner*elaborate*emergency_higher_priority
+   (state <s> ^name moral_reasoner <agent>
+	      ^io.output-link <out_link>)
+   (<agent> ^get_input <get_in>
+            ^pre_input <pre_in>)
+   (<get_in> ^mission Emergency)
+   (<pre_in> ^pre_act pending
+	     ^pre_priority { <pre_priority> <> 0 })
+   (<out_link> ^user_emergency_priority { <current_priority> > <pre_priority> }
+	     ^extra_act <pre_extra>
+             ^endMission finish)
+-->
+   (<out_link> ^extra_act <pre_extra> - |your order will be served FIRST|)
+}
+
+#==================================================================================================
+# Action 2: when the robot is in service,
+# if a new user (who has a LOWER/Equal priority value than previous user) makes an order,
+# then the agent decides to serve Current User NEXT.
+#==================================================================================================
+sp {moral_reasoner*elaborate*emergency_lower_priority
+   (state <s> ^name moral_reasoner <agent>
+	      ^io.output-link <out_link>)
+   (<agent> ^get_input <get_in>
+            ^pre_input <pre_in>)
+   (<get_in> ^mission <> Emergency)
+   (<pre_in> ^pre_act pending
+	     ^pre_priority { <pre_priority> <> 0 })
+   (<out_link> ^user_emergency_priority { <current_priority> <= <pre_priority> }
+	     ^extra_act <pre_extra>
+             ^endMission finish)
+-->
+   (<out_link> ^extra_act <pre_extra> - |your order will be served NEXT|)
+}
+

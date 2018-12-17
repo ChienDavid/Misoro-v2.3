@@ -1,0 +1,6 @@
+# underlying conversation system
+RAWDATA/Misoro/	
+# quibble ability
+RAWDATA/QUIBBLE/
+
+
